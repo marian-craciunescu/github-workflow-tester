@@ -25,17 +25,35 @@ jobs:
     - name: Extract branch name
       run: |
         if [[   ${GITHUB_REF} == *"releases"* ]]; then
-          version_val= "${GITHUB_REF#refs/heads/releases/}"
+          version_val="${GITHUB_REF#refs/heads/releases/}"
         elif [[   ${GITHUB_REF} == *"tags"* ]]; then
-          version_val= "${GITHUB_REF#refs/tags/}"
+          version_val="${GITHUB_REF#refs/tags/}"
         else
           echo "Unsupported branch/tag version for this workflow"
           exit 1
         fi
+        pointCharOccurrence="${version_val//[^\.]}"
+        noOfOccurence="${#pointCharOccurrence}"
+
+        if [ $noOfOccurence -ne 2 ]; then
+             echo "Release Branch/Tag should be in format v#MajorVersion.#MinorVersion.#bugfixVersion"
+            exit 1
+        fi
+        majorVersion=$(echo  $version_val |cut -f1 -d ".")
+        minorVersion=$(echo  $version_val |cut -f2 -d ".")
+        bugfixVersion=$(echo  $version_val |cut -f3 -d ".")
+
+        echo "$majorVersion $minorVersion $bugfixVersion"
         
-        echo "##[set-output name=branch;]$(version_val)"
+        echo "##[set-output name=branch;]$(echo $version_val)"
+        echo "##[set-output name=majorVersion;]$(echo $majorVersion)"
+        echo "##[set-output name=minorVersion;]$(echo $minorVersion)"
+        echo "##[set-output name=bugfixVersion;]$(echo $bugfixVersion)"
         
       id: extract_branch      
     - name: Echo name
       run: | 
         echo "${{steps.extract_branch.outputs.branch}}"
+        echo "Major=${{steps.extract_branch.outputs.majorVersion}}"
+        echo "Minor=${{steps.extract_branch.outputs.minorVersion}}"
+        echo "bug=${{steps.extract_branch.outputs.bugfixVersion}}"
