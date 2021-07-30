@@ -24,8 +24,17 @@ jobs:
       
     - name: Extract branch name
       run: |
-        echo "On branch ${GITHUB_REF#refs/heads/releases/}"
-        echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/releases/})"
+        if [[   ${GITHUB_REF} == *"releases"* ]]; then
+          version_val= "${GITHUB_REF#refs/heads/releases/}"
+        elif [[   ${GITHUB_REF} == *"tags"* ]]; then
+          version_val= "${GITHUB_REF#refs/tags/}"
+        else
+          echo "Unsupported branch/tag version for this workflow"
+          exit 1
+        fi
+        
+        echo "##[set-output name=branch;]$(version_val)"
+        
       id: extract_branch      
     - name: Echo name
       run: | 
